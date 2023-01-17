@@ -1,0 +1,49 @@
+<html>
+  <head>
+    <title>Audio Recorder</title>
+  </head>
+  <body>
+    <h1>Audio Recorder</h1>
+    <button id="record">Record</button>
+    <button id="stop">Stop</button>
+    <script>
+      const record = document.getElementById("record");
+      const stop = document.getElementById("stop");
+      let stream;
+      let mediaRecorder;
+      stop.addEventListener("click", () => {
+        if (stream) {
+          stream.getTracks().forEach((track) => {
+            track.stop();
+          });
+        }
+        if (mediaRecorder) {
+          mediaRecorder.stop();
+        }
+      });
+
+      record.addEventListener("click", () => {
+        navigator.mediaDevices.getUserMedia({ audio: true }).then((s) => {
+          stream = s;
+          if (stream) {
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.start();
+            mediaRecorder.addEventListener("dataavailable", (e) => {
+              console.log("Data available");
+              const audioBlob = new Blob([e.data], { type: "audio/webm" });
+              const formData = new FormData();
+              formData.append("audio", audioBlob);
+              
+              fetch("/save-audio", {
+                method: "POST",
+                body: formData,
+              });
+            });
+          } else {
+            console.log("Permission denied or Invalid stream");
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
